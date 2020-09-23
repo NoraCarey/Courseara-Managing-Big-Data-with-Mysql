@@ -1,1 +1,1 @@
-# Courseara-Managing-Big-Data-with-Mysql
+# Coursera-Managing-Big-Data-with-Mysql
