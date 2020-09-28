@@ -89,8 +89,25 @@ GROUP BY s.state, s.city, s.store, s.msa_income;
                                                                      
                                                                      
                                                                   
+# Exercise 8: Examine all the transactions for the sku with the greatest standard deviation in
+#             sprice, but only consider skus that are part of more than 100 transactions. 
+                                                                     
+  
+# Exercise 9: What was the average daily revenue Dillard’s brought in during each month of the year?   
+                                                                     
+                                                                     
+# Exercise 10: Which department, in which city and state of what store, had the greatest %
+#              increase in average daily sales revenue from November to December? 
+                                                                     
 
-
-
+                                                                     
+# Exercise 11: What is the city and state of the store that had the greatest decrease in average daily revenue from August to September? 
+                                                                     
+                                                                     
+# Exercise 12: Determine the month of maximum total revenue for each store. Count the
+#              number of stores whose month of maximum total revenue was in each of the twelve
+#              months. Then determine the month of maximum average daily revenue. Count the
+#              number of stores whose month of maximum average daily revenue was in each of the
+#              twelve months. How do they compare?
               
            
