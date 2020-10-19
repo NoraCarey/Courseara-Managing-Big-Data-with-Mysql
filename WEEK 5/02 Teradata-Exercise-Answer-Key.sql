@@ -86,14 +86,38 @@ GROUP BY s.state, s.city, s.store, s.msa_income;
                                                                      
 # Exercise 7: What is the brand of the sku with the greatest standard deviation in sprice?
 #             Only examine skus that have been part of over 100 transactions.     
-                                                                     
-                                                                     
+
+SELECT s.sku, s.brand, top1.std
+FROM (SELECT TOP 1 sku, STDDEV_SAMP(sprice) AS std, COUNT(sku) AS trans_num
+      FROM trnsact 
+      GROUP BY sku
+      ORDER BY std DESC
+      HAVING trans_num > 100) AS top1
+JOIN skuinfo s
+ON s.sku = top1.sku;
                                                                   
+                                                                                                                                    
 # Exercise 8: Examine all the transactions for the sku with the greatest standard deviation in
 #             sprice, but only consider skus that are part of more than 100 transactions. 
+
+SELECT *
+FROM (SELECT top 1 sku, STDDEV_SAMP(sprice) AS std, COUNT(sku) as sku_num
+      FROM trnsact 
+      GROUP BY sku
+      ORDER BY std DESC
+      HAVING sku_num > 100) AS top1
+JOIN trnsact t
+ON t.sku = top1.sku;                                                                     
                                                                      
   
 # Exercise 9: What was the average daily revenue Dillard’s brought in during each month of the year?   
+
+SELECT EXTRACT(YEAR FROM saledate) || EXTRACT(MONTH FROM saledate) AS date_month, SUM(amt) as total_revenue, 
+       COUNT(DISTINCT (EXTRACT(DAY FROM saledate))) AS day_num,  (total_revenue / day_num)  AS daily_revenue
+FROM trnsact
+GROUP BY date_month
+WHERE stype = 'P' AND NOT (EXTRACT(YEAR FROM saledate) = 2005 AND EXTRACT(MONTH FROM saledate) = 8)
+ORDER BY daily_revenue DESC;
                                                                      
                                                                      
 # Exercise 10: Which department, in which city and state of what store, had the greatest %
