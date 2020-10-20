@@ -112,11 +112,14 @@ ON t.sku = top1.sku;
   
 # Exercise 9: What was the average daily revenue Dillard’s brought in during each month of the year?   
 
-SELECT EXTRACT(YEAR FROM saledate) || EXTRACT(MONTH FROM saledate) AS date_month, SUM(amt) as total_revenue, 
-       COUNT(DISTINCT (EXTRACT(DAY FROM saledate))) AS day_num,  (total_revenue / day_num)  AS daily_revenue
-FROM trnsact
-GROUP BY date_month
-WHERE stype = 'P' AND NOT (EXTRACT(YEAR FROM saledate) = 2005 AND EXTRACT(MONTH FROM saledate) = 8)
+SELECT table1.date_month, SUM(table1.total_revenue) / SUM(table1.day_num) AS daily_revenue
+FROM (SELECT EXTRACT(YEAR FROM saledate) || EXTRACT(MONTH FROM saledate) AS date_month, store, SUM(amt) as total_revenue, 
+             COUNT(DISTINCT saledate) AS day_num
+      FROM trnsact
+      WHERE stype = 'P' AND NOT (EXTRACT(YEAR FROM saledate) = 2005 AND EXTRACT(MONTH FROM saledate) = 8)
+      GROUP BY date_month, store
+      HAVING day_num > 20) AS table1
+GROUP BY table1.date_month
 ORDER BY daily_revenue DESC;
                                                                      
                                                                      
