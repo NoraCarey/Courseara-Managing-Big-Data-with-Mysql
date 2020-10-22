@@ -40,7 +40,7 @@ SELECT EXTRACT(YEAR FROM SALEDATE) || EXTRACT(MONTH FROM SALEDATE) AS date_month
        COUNT(DISTINCT (EXTRACT(DAY FROM SALEDATE))) AS day_num, SUM(AMT) AS total_revenue, (total_revenue / day_num) AS daily_revenue
 FROM TRNSACT
 WHERE STYPE = 'P' AND NOT (EXTRACT(YEAR FROM SALEDATE) = 2005 AND EXTRACT(MONTH FROM SALEDATE) = 8)
-HAVING day_num > 20 
+HAVING day_num >= 20 
 GROUP BY date_month, STORE
 ORDER BY daily_revenue;
 
@@ -58,7 +58,7 @@ JOIN (SELECT EXTRACT(YEAR FROM SALEDATE) || EXTRACT(MONTH FROM SALEDATE) AS date
              COUNT(DISTINCT (EXTRACT(DAY FROM SALEDATE))) AS day_num, SUM(AMT) AS total_revenue, (total_revenue / day_num) AS daily_revenue
       FROM TRNSACT
       WHERE STYPE = 'P' AND NOT (EXTRACT(YEAR FROM SALEDATE) = 2005 AND EXTRACT(MONTH FROM SALEDATE) = 8)
-      HAVING day_num > 20 
+      HAVING day_num >= 20 
       GROUP BY date_month, STORE) AS revenue_table
 ON revenue_table.store = education_table.store
 GROUP BY education_area
@@ -75,7 +75,7 @@ FROM (SELECT store, EXTRACT(YEAR FROM saledate) || EXTRACT(MONTH FROM saledate) 
              total_revenue / day_num AS daily_revenue
       FROM trnsact
       WHERE stype = 'P' AND NOT (EXTRACT(YEAR FROM saledate) = 2005 AND EXTRACT(MONTH FROM saledate) = 8)
-      HAVING day_num > 20
+      HAVING day_num >= 20
       GROUP BY date_month, store) AS t
 JOIN (SELECT store, state, city, msa_income
       FROM store_msa
@@ -118,7 +118,7 @@ FROM (SELECT EXTRACT(YEAR FROM saledate) || EXTRACT(MONTH FROM saledate) AS date
       FROM trnsact
       WHERE stype = 'P' AND NOT (EXTRACT(YEAR FROM saledate) = 2005 AND EXTRACT(MONTH FROM saledate) = 8)
       GROUP BY date_month, store
-      HAVING day_num > 20) AS table1
+      HAVING day_num >= 20) AS table1
 GROUP BY table1.date_month
 ORDER BY daily_revenue DESC;
                                                                      
@@ -126,7 +126,23 @@ ORDER BY daily_revenue DESC;
 # Exercise 10: Which department, in which city and state of what store, had the greatest %
 #              increase in average daily sales revenue from November to December? 
                                                                      
-
+SELECT best.dept, i.state, i.city, best.store, best.Percent_increase
+FROM (SELECT TOP 1 t.store, d.dept,
+             SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 11 THEN amt END) AS Nov_rev,
+             SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 12 THEN amt END) AS Dec_rev,
+             COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 11 THEN saledate END))AS Nov_days,
+             COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 12 THEN saledate END)) AS Dec_days,
+             Nov_rev / Nov_days AS Nov_daily,
+             Dec_rev / Dec_days AS Dec_daily,
+             ((Dec_daily - Nov_daily) / Nov_daily) * 100 AS Percent_increase
+      FROM trnsact t, skuinfo s, deptinfo d
+      WHERE t.sku = s.sku AND s.dept = d.dept AND t.stype = 'P' 
+      GROUP BY t.store, d.dept
+      HAVING Nov_days >= 20 AND Dec_days >= 20
+      ORDER BY Percent_increase DESC) AS best
+JOIN strinfo i 
+ON i.store = best.store;
+                   
                                                                      
 # Exercise 11: What is the city and state of the store that had the greatest decrease in average daily revenue from August to September? 
                                                                      
