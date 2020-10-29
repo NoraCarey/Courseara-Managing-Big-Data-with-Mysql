@@ -144,13 +144,89 @@ JOIN strinfo i
 ON i.store = best.store;
                    
                                                                      
-# Exercise 11: What is the city and state of the store that had the greatest decrease in average daily revenue from August to September? 
+# Exercise 11. What is the city and state of the store that had the greatest decrease in average daily revenue from August to September? 
+  
+  SELECT s.city, s.state, t.store, t.decrease_avg
+  FROM (SELECT TOP 1 store,
+               SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 8 THEN amt END) AS Aug_rev,
+               SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 9 THEN amt END) AS Sep_rev,
+               COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 8 THEN saledate END)) AS Aug_days,
+               COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 9 THEN saledate END)) AS Sep_days,
+               Aug_rev / Aug_days AS Aug_avg,
+               Sep_rev / Sep_days AS Sep_avg,
+               ((Sep_avg - Aug_avg) / Aug_avg) AS decrease_avg
+         FROM trnsact
+         WHERE EXTRACT(YEAR FROM saledate) = 2004 AND stype = 'P'
+         GROUP BY store
+         HAVING Aug_days >= 20 AND Sep_days >= 20
+         ORDER BY decrease_avg ASC) AS t
+  JOIN strinfo s
+  ON s.store = t.store;               
+                     
                                                                      
-                                                                     
-# Exercise 12: Determine the month of maximum total revenue for each store. Count the
-#              number of stores whose month of maximum total revenue was in each of the twelve
-#              months. Then determine the month of maximum average daily revenue. Count the
-#              number of stores whose month of maximum average daily revenue was in each of the
-#              twelve months. How do they compare?
-              
+# Exercise 12. Determine the month of minimum total revenue for each store. Count the
+#              number of stores whose month of minimum total revenue was in each of the twelve months.
+#              Then determine the month of minimum average daily revenue. Count the number of stores
+#              whose month of minimum average daily revenue was in each of the twelve months. How do they compare? 
+
+SELECT CASE 
+           WHEN tbl.month_date = 1 THEN 'Jan'
+           WHEN tbl.month_date = 2 THEN 'Feb'
+           WHEN tbl.month_date = 3 THEN 'Mar'
+           WHEN tbl.month_date = 4 THEN 'Apr'
+           WHEN tbl.month_date = 5 THEN 'May'
+           WHEN tbl.month_date = 6 THEN 'Jun'
+           WHEN tbl.month_date = 7 THEN 'Jul'
+           WHEN tbl.month_date = 8 THEN 'Aug'
+           WHEN tbl.month_date = 9 THEN 'Sept'
+           WHEN tbl.month_date = 10 THEN 'Oct'
+           WHEN tbl.month_date = 11 THEN 'Nov'
+           WHEN tbl.month_date = 12 THEN 'Dec'
+       END AS month_name,
+       COUNT(tbl.store) AS store_nums
+FROM (SELECT EXTRACT(MONTH FROM saledate) AS month_date, store, COUNT(DISTINCT(saledate)) AS month_days, SUM(amt) AS total_rev, 
+             RANK() OVER(PARTITION BY store 
+                         ORDER BY total_rev ASC) AS ranking
+      FROM trnsact
+      WHERE stype = 'P' AND NOT (EXTRACT(YEAR FROM saledate) = 2005 AND EXTRACT(MONTH FROM saledate) = 8) 
+      GROUP BY month_date, store
+      HAVING month_days >= 20
+      QUALIFY ranking <= 1) AS tbl
+GROUP BY tbl.month_date
+ORDER BY tbl.month_date ASC;
+
+                                                                      
+SELECT CASE 
+           WHEN tbl.month_date = 1 THEN 'Jan'
+           WHEN tbl.month_date = 2 THEN 'Feb'
+           WHEN tbl.month_date = 3 THEN 'Mar'
+           WHEN tbl.month_date = 4 THEN 'Apr'
+           WHEN tbl.month_date = 5 THEN 'May'
+           WHEN tbl.month_date = 6 THEN 'Jun'
+           WHEN tbl.month_date = 7 THEN 'Jul'
+           WHEN tbl.month_date = 8 THEN 'Aug'
+           WHEN tbl.month_date = 9 THEN 'Sept'
+           WHEN tbl.month_date = 10 THEN 'Oct'
+           WHEN tbl.month_date = 11 THEN 'Nov'
+           WHEN tbl.month_date = 12 THEN 'Dec'
+       END AS month_name,
+       COUNT(tbl.store) AS store_nums
+FROM (SELECT EXTRACT(MONTH FROM saledate) AS month_date, store, COUNT(DISTINCT(saledate)) AS month_days, SUM(amt) AS total_rev, 
+             total_rev / month_days AS avg_rev,
+             RANK() OVER(PARTITION BY store 
+                         ORDER BY avg_rev ASC) AS ranking
+      FROM trnsact
+      WHERE stype = 'P' AND NOT (EXTRACT(YEAR FROM saledate) = 2005 AND EXTRACT(MONTH FROM saledate) = 8) 
+      GROUP BY store, month_date
+      HAVING month_days >= 20
+      QUALIFY ranking <= 1) AS tbl
+GROUP BY tbl.month_date
+ORDER BY tbl.month_date ASC;                                                                      
+                     
+                     
+                     
+      
+                                                                      
+                                                                      
+                                                                      
            
