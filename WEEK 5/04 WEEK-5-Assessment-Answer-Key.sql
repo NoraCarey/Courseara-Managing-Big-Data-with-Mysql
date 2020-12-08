@@ -33,6 +33,7 @@ ORDER BY rev_diff DESC;
 # Question 4. What vendor has	the greatest number of distinct skus in the transaction table that do not exist in the	
 #             skstinfo table?	(Remember that vendors are listed as distinct numbers	in our data	set).	
 
+# Method 1                      
 SELECT TOP 1 sk.vendor, COUNT(DISTINCT t.sku) AS sku_nums
 FROM trnsact t
 JOIN skuinfo sk
@@ -40,6 +41,17 @@ ON t.sku = sk.sku
 LEFT JOIN skstinfo s
 ON s.sku = sk.sku
 GROUP BY sk.vendor
+ORDER BY sku_nums DESC;
+    
+# Method 2
+SELECT TOP 1 s.vendor, COUNT(DISTINCT(s.sku)) AS sku_nums
+FROM trnsact t
+JOIN skuinfo s
+ON t.sku = s.sku
+WHERE EXISTS (SELECT *
+              FROM skstinfo i
+              WHERE i.sku = s.sku)
+GROUP BY s.vendor
 ORDER BY sku_nums DESC;
 
 
