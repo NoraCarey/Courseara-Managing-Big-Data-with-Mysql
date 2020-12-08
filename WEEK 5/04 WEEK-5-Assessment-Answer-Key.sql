@@ -236,13 +236,65 @@ ON i.store = tbl.store;
 #              Week 5 Exercise Guide). For each of the twelve months of	the year, count how many stores' minimum average daily	
 #              revenue was in that month. During which month(s) did over 100 stores have their minimum average daily revenue?	
      
-                   
-
+SELECT CASE
+           WHEN tbl.month_date = 1 THEN 'January'
+           WHEN tbl.month_date = 2 THEN 'February'
+           WHEN tbl.month_date = 3 THEN 'March'
+           WHEN tbl.month_date = 4 THEN 'April'
+           WHEN tbl.month_date = 5 THEN 'May'
+           WHEN tbl.month_date = 6 THEN 'June'
+           WHEN tbl.month_date = 7 THEN 'July'
+           WHEN tbl.month_date = 8 THEN 'August'
+           WHEN tbl.month_date = 9 THEN 'September'
+           WHEN tbl.month_date = 10 THEN 'October'
+           WHEN tbl.month_date = 11 THEN 'November'
+           WHEN tbl.month_date = 12 THEN 'December'
+       END, COUNT(tbl.store) AS store_nums
+FROM (SELECT store, EXTRACT(MONTH FROM saledate) AS month_date, SUM(amt) AS total_rev,
+             COUNT(DISTINCT saledate) AS month_days, total_rev / month_days AS daily_rev,
+             RANK() OVER(PARTITION BY store 
+                         ORDER BY daily_rev) AS ranking
+      FROM trnsact
+      WHERE stype = 'p' AND NOT (EXTRACT(YEAR FROM saledate) = 2005 AND EXTRACT(MONTH FROM saledate) = 8)
+      GROUP BY store, month_date
+      HAVING month_days >= 20
+      QUALIFY ranking <= 1) AS tbl
+GROUP BY tbl.month_date
+ORDER BY store_nums DESC;
+                  
                    
 # Question 14: Write a query that determines the month in which each store had its maximum number of sku units	
 #              returned. During which month did the greatest number of stores	have their maximum number of sku units returned?		
 
-
+SELECT CASE
+           WHEN tbl.month_date = 1 THEN 'January'
+           WHEN tbl.month_date = 2 THEN 'February'
+           WHEN tbl.month_date = 3 THEN 'March'
+           WHEN tbl.month_date = 4 THEN 'April'
+           WHEN tbl.month_date = 5 THEN 'May'
+           WHEN tbl.month_date = 6 THEN 'June'
+           WHEN tbl.month_date = 7 THEN 'July'
+           WHEN tbl.month_date = 8 THEN 'August'
+           WHEN tbl.month_date = 9 THEN 'September'
+           WHEN tbl.month_date = 10 THEN 'October'
+           WHEN tbl.month_date = 11 THEN 'November'
+           WHEN tbl.month_date = 12 THEN 'December'
+       END, COUNT(tbl.store) AS store_nums
+FROM (SELECT store, EXTRACT(MONTH FROM saledate) AS month_date, COUNT(DISTINCT saledate) AS month_days, 
+             COUNT(sku) AS return_nums,
+             RANK() OVER(PARTITION BY store
+                         ORDER BY return_nums DESC) AS ranking
+      FROM trnsact
+      WHERE stype = 'r' AND NOT (EXTRACT(YEAR FROM saledate) = 2005 AND EXTRACT(MONTH FROM saledate) = 8)
+      GROUP BY store, month_date
+      HAVING month_days >= 20
+      QUALIFY ranking <= 1) AS tbl
+GROUP BY tbl.month_date
+ORDER BY store_nums DESC;
+                   
+                   
+                   
+                   
                    
                    
 
