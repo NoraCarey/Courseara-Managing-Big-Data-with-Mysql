@@ -48,7 +48,7 @@ SELECT TOP 1 s.vendor, COUNT(DISTINCT(s.sku)) AS sku_nums
 FROM trnsact t
 JOIN skuinfo s
 ON t.sku = s.sku
-WHERE EXISTS (SELECT *
+WHERE NOT EXISTS (SELECT *
               FROM skstinfo i
               WHERE i.sku = s.sku)
 GROUP BY s.vendor
@@ -158,19 +158,85 @@ GROUP BY msa_pop_label;
 # Question 10: Which department in which store had the greatest percent	increase in	average daily sales revenue from	
 #              November	to December, and what city and state was that store located	in? Only examine departments whose total	
 #              sales were at least $1,000	in both November and December.    
+
+SELECT tbl.deptdesc, tbl.store, i.city, i.state, tbl.percent_increase
+FROM (SELECT TOP 1 d.deptdesc, t.store, 
+             SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 11 THEN amt END) AS Nov_total,
+             SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 12 THEN amt END) AS Dec_total,
+             COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 11 THEN saledate END)) AS Nov_days,
+             COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 12 THEN saledate END)) AS Dec_days,
+             Nov_total / Nov_days AS Nov_daily,
+             Dec_total / Dec_days AS Dec_daily, 
+             ((Dec_daily - Nov_daily) / Nov_daily) * 100 AS percent_increase
+     FROM trnsact t
+     JOIN skuinfo s 
+     ON t.sku = s.sku
+     JOIN deptinfo d
+     ON s.dept = d.dept
+     WHERE stype = 'p'
+     GROUP BY d.deptdesc, t.store
+     HAVING Nov_days >= 20 AND Dec_days >= 20 AND Nov_total >= 1000 AND Dec_total >= 1000
+     ORDER BY percent_increase DESC) AS tbl
+JOIN strinfo i
+ON i.store = tbl.store;
                    
 
 # Question 11. Which department within what store had	the greatest decrease in average daily sales revenue from	
 #              August to September,	and what city and	state	was that store located in? 
+
+SELECT tbl.deptdesc, tbl.store, i.city, i.state, tbl.daily_diff
+FROM (SELECT TOP 1 d.deptdesc, t.store, 
+             SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 8 THEN amt END) AS Aug_total,
+             SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 9 THEN amt END) AS Sep_total,
+             COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 8 THEN saledate END)) AS Aug_days,
+             COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 9 THEN saledate END)) AS Sep_days,
+             Aug_total / Aug_days AS Aug_daily,
+             Sep_total / Sep_days AS Sep_daily,
+             (Sep_daily - Aug_daily) AS daily_diff
+      FROM trnsact t
+      JOIN skuinfo s
+      ON t.sku = s.sku
+      JOIN deptinfo d
+      ON d.dept = s.dept
+      WHERE stype = 'p' AND NOT (EXTRACT(YEAR FROM saledate) = 2005)
+      GROUP BY d.deptdesc, t.store
+      HAVING Aug_days >= 20 AND Sep_days >= 20
+      ORDER BY daily_diff) AS tbl
+JOIN strinfo i
+ON i.store = tbl.store;
                    
                    
 # Question 12: Identify	which	department, in which city and state of what store, had the greatest decrease in number	
 #              of items sold from August to September. How many fewer items did that department sell in September compared to	August?
+#              (the answer is wrong, because it ask the greatest decrease in number of items solde from August to September,
+#               the number Aug_amt - Sep_amt should be negative, when the answer is 13491 the question should be the greatest increase,
+#               and we could add DESC on ORDER BY column to get the right answer)
+                   
+SELECT tbl.deptdesc, tbl.store, i.city, i.state, tbl.amt_diff
+FROM (SELECT TOP 1 d.deptdesc, t.store,
+             SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 8 THEN quantity END) AS Aug_amt,
+             SUM(CASE WHEN EXTRACT(MONTH FROM saledate) = 9 THEN quantity end) AS Sep_amt,
+             COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 8 THEN saledate END)) AS Aug_days,
+             COUNT(DISTINCT(CASE WHEN EXTRACT(MONTH FROM saledate) = 9 THEN saledate END)) AS Sep_days,
+             (Aug_amt - Sep_amt) AS amt_diff
+      FROM trnsact t
+      JOIN skuinfo s
+      ON t.sku = s.sku
+      JOIN deptinfo d
+      ON d.dept = s.dept
+      WHERE stype = 'p' AND NOT (EXTRACT(YEAR FROM saledate) = 2005)
+      GROUP BY d.deptdesc, t.store
+      HAVING Aug_days >= 20 AND Sep_days >= 20 AND Aug_amt IS NOT NULL AND Sep_amt IS NOT NULL
+      ORDER BY amt_diff) AS tbl
+JOIN strinfo i
+ON i.store = tbl.store;
                    
                    
 # Question 13: For each store, determine the month with the minimum average daily revenue (as I define it in Teradata	
 #              Week 5 Exercise Guide). For each of the twelve months of	the year, count how many stores' minimum average daily	
-#              revenue was in that month. During which month(s) did over 100 stores have their minimum average daily revenue?		
+#              revenue was in that month. During which month(s) did over 100 stores have their minimum average daily revenue?	
+     
+                   
 
                    
 # Question 14: Write a query that determines the month in which each store had its maximum number of sku units	
