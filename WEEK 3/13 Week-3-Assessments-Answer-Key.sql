@@ -1,4 +1,4 @@
-# Question 2. On what day was Dillard’s	income based on	total	sum	of purchases the greatest?
+# Question 2. On what day was Dillard’s income based on total sum of purchases the greatest?
 
 # Question 3. What is the	deptdesc of the	departments that have the top	3	greatest numbers of	skus from	the	skstinfo table associated	with them?
 
