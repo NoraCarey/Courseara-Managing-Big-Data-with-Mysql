@@ -100,23 +100,21 @@ WHERE s.store NOT IN (SELECT r.store
 #             profit = revenue - cost). Examine some of the rows in the trnsact table that are not in the skstinfo table;
 #             can you find any common features that could explain why the cost information is missing? 
 
-# Method 1:
-SELECT * 
-FROM trnsact
-WHERE sku NOT IN (SELECT sku
-                  FROM skstinfo);
-                  
-# Method 2:
 SELECT *
 FROM trnsact t
 LEFT JOIN skstinfo s
 ON s.sku = t.sku
 WHERE s.sku IS NULL;
 
-
 # Exercise 4: Although we can’t complete all the analyses we’d like to on Dillard’s profit, we can look at
 #             general trends. What is Dillard’s average profit per day?
 
+SELECT SUM(t.amt - s.cost * t.quantity) AS total_profit, COUNT(DISTINCT saledate) AS days_nums,
+       total_profit / days_nums AS avg_profit
+FROM trnsact t
+LEFT JOIN skstinfo s
+ON t.sku = s.sku AND t.store = s.store
+WHERE stype = 'p' AND s.sku IS NOT NULL;
 
 
 # Exercise 5: On what day was the total value (in $) of returned goods the greatest? On what day was the
@@ -176,27 +174,15 @@ WHERE s.sku = 5020024;
 
 # Exercise 9: What department (with department description), brand, style, and color had the greatest total value of returned items? 
 
-SELECT s.dept, d.deptdesc, s.brand, s.stype, s.color, SUM(t.amt) AS total_return
+SELECT s.dept, d.deptdesc, s.brand, s.style, s.color, SUM(t.amt) AS total_return
 FROM trnsact t
 JOIN skuinfo s
 ON t.sku = s.sku
 JOIN deptinfo d
 ON d.dept = s.dept
 WHERE t.stype = 'r'
-GROUP BY s.dept, d.deptdesc, s.brand, s.stype, s.color
-ORDER BY total_return DESC;
-
-SELECT s.dept, d.deptdesc, s.brand, s.style, s.color, tbl.total_return
-FROM (SELECT sku, SUM(amt) AS total_return 
-      FROM trnsact
-      WHERE stype = 'r'
-      GROUP BY sku) AS tbl
-JOIN skuinfo s
-ON tbl.sku = s.sku
-JOIN deptinfo d
-ON d.dept = s.sept
 GROUP BY s.dept, d.deptdesc, s.brand, s.style, s.color
-ORDER BY tbl.total_return DESC;
+ORDER BY total_return DESC;
       
 
 # Exercise 10: In what state and zip code is the store that had the greatest total revenue during the time period monitored in our dataset? 
@@ -207,10 +193,7 @@ JOIN strinfo s
 ON t.store = s.store
 WHERE t.stype = 'p'
 GROUP BY s.state, s.city, t.store
-ORDER BY total_rev;
-
-
-
+ORDER BY total_rev DESC;
 
 
 
